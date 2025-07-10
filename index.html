@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive Portfolio Charter</title>
+    <!-- D3.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <link rel="stylesheet" href="res/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Hive Portfolio Charter 1.0</h1>
+            <p>Visualize your Hive blockchain portfolio performance over time</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <div class="control-item">
+                    <label for="fileInput">📁 Load Snapshot Files</label>
+                    <div class="file-input-container">
+                        <input type="file" id="fileInput" multiple accept=".json">
+                        <label for="fileInput" class="file-input-label">
+                            Choose Snapshot Files
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-item">
+                    <label for="snapshotType">📅 Snapshot Type</label>
+                    <select id="snapshotType">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="quarterly">Quarterly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+
+                <div class="control-item">
+                    <label for="dataCategory">📈 Data Category</label>
+                    <select id="dataCategory">
+                        <option value="total_portfolio">Total Portfolio</option>
+                        <option value="layer1_total">Layer 1 Holdings</option>
+                        <option value="pools_total">Diesel Pools</option>
+                        <option value="tokens_total">Regular Tokens</option>
+                        <option value="specific_token">Specific Token</option>
+                        <option value="specific_pool">Specific Pool</option>
+                    </select>
+                </div>
+
+                <div class="control-item">
+                    <label for="specificItem">🎯 Specific Item</label>
+                    <select id="specificItem" disabled>
+                        <option value="">Select item...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="control-item">
+                    <label for="dateStart">📅 Start Date</label>
+                    <input type="date" id="dateStart">
+                </div>
+
+                <div class="control-item">
+                    <label for="dateEnd">📅 End Date</label>
+                    <input type="date" id="dateEnd">
+                </div>
+            </div>
+
+            <div id="status" class="status" style="display: none;"></div>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3 class="chart-title">💰 USD Value</h3>
+                <div class="chart-container">
+                    <div id="usdChart"></div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3 class="chart-title"><img class="hive-logo-icon" src="res/hive-logo.png" alt="Hive logo"/> HIVE Value</h3>
+                <div class="chart-container">
+                    <div id="hiveChart"></div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3 class="chart-title">₿ BTC Value</h3>
+                <div class="chart-container">
+                    <div id="btcChart"></div>
+                </div>
+            </div>
+        </div>
+        <div class="footer">
+        <p>Created by <a href="https://peakd.com/@gadrian">@gadrian</a>.</p>
+        <p>You can use <a href="https://github.com/gadrian78/he-tokens-snapshot">Hive Portfolio Tracker</a> to generate Snapshot files automatically/manually. Runs locally in Linux.</p>
+        <p>Or you can create them yourself or using another tool.</p>
+        </div>
+    </div>
+    <script src="scripts/portfolio-charts-D3.js"></script>
+</body>
+</html>
