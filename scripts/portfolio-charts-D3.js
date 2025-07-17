@@ -725,37 +725,74 @@ class HivePortfolioCharter {
             return null;
         }
 
-        // Calculate token price by dividing chart value by token quantity
+        // Calculate token price by dividing total value by total quantity across all snapshots
         let totalQuantity = 0;
-        let totalValue = 0;
+        let totalValueUsd = 0;
+        let totalValueHive = 0;
+        let totalValueBtc = 0;
+        let validSnapshots = 0;
         
         dataPoint.snapshots.forEach(snapshot => {
+            let data = null;
+            let quantity = 0;
+            
             if (specificItem.startsWith('L1:')) {
                 const key = specificItem.replace('L1:', '');
-                const data = snapshot.layer1_holdings?.[key];
+                data = snapshot.layer1_holdings?.[key];
                 if (data && data.total_amount !== undefined && data.total_amount !== null) {
-                    const quantity = typeof data.total_amount === 'string' ? parseFloat(data.total_amount) : data.total_amount;
-                    if (!isNaN(quantity)) {
+                    quantity = typeof data.total_amount === 'string' ? parseFloat(data.total_amount) : data.total_amount;
+                    if (!isNaN(quantity) && quantity > 0) {
                         totalQuantity += quantity;
-                        totalValue += data.value_usd || 0;
+                        totalValueUsd += data.value_usd || 0;
+                        totalValueHive += data.value_hive || 0;
+                        totalValueBtc += data.value_btc || 0;
+                        validSnapshots++;
                     }
                 }
             } else if (specificItem.startsWith('TOKEN:')) {
                 const key = specificItem.replace('TOKEN:', '');
-                const data = snapshot.tokens?.[key];
+                data = snapshot.tokens?.[key];
                 if (data && data.total_amount !== undefined && data.total_amount !== null) {
-                    const quantity = typeof data.total_amount === 'string' ? parseFloat(data.total_amount) : data.total_amount;
-                    if (!isNaN(quantity)) {
+                    quantity = typeof data.total_amount === 'string' ? parseFloat(data.total_amount) : data.total_amount;
+                    if (!isNaN(quantity) && quantity > 0) {
                         totalQuantity += quantity;
-                        totalValue += data.values?.usd || 0;
+                        totalValueUsd += data.values?.usd || 0;
+                        totalValueHive += data.values?.hive || 0;
+                        totalValueBtc += data.values?.btc || 0;
+                        validSnapshots++;
                     }
                 }
             }
         });
 
-        if (totalQuantity > 0 && totalValue > 0) {
-            const tokenPrice = totalValue / totalQuantity;
-            return `${tokenName} Price: $${d3.format(",.6f")(tokenPrice)}`;
+        // Only calculate price if we have valid data
+        if (validSnapshots > 0 && totalQuantity > 0) {
+            let tokenPrice = 0;
+            let priceLabel = '';
+            
+            // Calculate price based on the currency being displayed
+            switch (currency) {
+                case 'usd':
+                    if (totalValueUsd > 0) {
+                        tokenPrice = totalValueUsd / totalQuantity;
+                        priceLabel = `${tokenName} Price: $${d3.format(",.6f")(tokenPrice)}`;
+                    }
+                    break;
+                case 'hive':
+                    if (totalValueHive > 0) {
+                        tokenPrice = totalValueHive / totalQuantity;
+                        priceLabel = `${tokenName} Price: ${d3.format(",.6f")(tokenPrice)} HIVE`;
+                    }
+                    break;
+                case 'btc':
+                    if (totalValueBtc > 0) {
+                        tokenPrice = totalValueBtc / totalQuantity;
+                        priceLabel = `${tokenName} Price: ${d3.format(",.10f")(tokenPrice)} BTC`;
+                    }
+                    break;
+            }
+            
+            return priceLabel || null;
         }
         
         return null;
