@@ -182,22 +182,6 @@ body {
     height: 360px;
 }
 
-/*.no-data {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 400px;
-    color: #666;
-    font-size: 1.1rem;
-}
-
-.no-data-icon {
-    font-size: 3rem;
-    margin-bottom: 15px;
-    opacity: 0.5;
-}*/
-
 /* D3.js specific styles */
 .grid line {
     stroke: #e0e0e0;
@@ -234,6 +218,12 @@ body {
     z-index: 1000;
 }
 
+.hive-logo-icon {
+    height: 1.1em;
+    width: auto;
+    vertical-align: middle;
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 15px;
@@ -252,8 +242,450 @@ body {
     }
 }
 
-.hive-logo-icon {
-    height: 1.1em;
-    width: auto;
-    vertical-align: middle;
+/* Dashboard Section Styles */
+.dashboard-section {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    margin-top: 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.dashboard-header h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+.account-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+.account-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+    padding: 5px 12px;
+    border-radius: 20px;
+}
+
+.last-update {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* Portfolio Summary Cards */
+.portfolio-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.summary-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #e1e5e9;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    min-height: 280px;
+}
+
+.summary-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.summary-card h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+}
+
+.summary-card.total-portfolio {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.summary-card.total-portfolio h3 {
+    color: white;
+}
+
+.summary-card.layer1-holdings::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #28a745, #20c997);
+}
+
+.summary-card.diesel-pools::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #007bff, #0056b3);
+}
+
+.summary-card.regular-tokens::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #ffc107, #fd7e14);
+}
+
+.summary-card.specific-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #dc3545, #c82333);
+}
+
+.value-display {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.currency-value {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.summary-card.total-portfolio .currency-value {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.currency-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.summary-card.total-portfolio .currency-label {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.value-amount {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #333;
+}
+
+.summary-card.total-portfolio .value-amount {
+    color: white;
+}
+
+/* Performance Metrics within Cards */
+.performance-metrics {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.summary-card.total-portfolio .performance-metrics {
+    border-top: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.performance-metrics h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #555;
+    text-align: center;
+}
+
+.summary-card.total-portfolio .performance-metrics h4 {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.metric-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    max-width: 200px;
+    margin: 0 auto;
+}
+
+.metric-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 6px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+    min-height: 50px;
+    justify-content: center;
+}
+
+.summary-card.total-portfolio .metric-item {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.metric-item:hover {
+    transform: translateY(-1px);
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.summary-card.total-portfolio .metric-item:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.metric-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #666;
+    margin-bottom: 3px;
+    text-align: center;
+    line-height: 1.1;
+}
+
+.summary-card.total-portfolio .metric-label {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.metric-value {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #333;
+    text-align: center;
+    line-height: 1.1;
+}
+
+.summary-card.total-portfolio .metric-value {
+    color: white;
+}
+
+.metric-value.positive {
+    color: #28a745;
+}
+
+.summary-card.total-portfolio .metric-value.positive {
+    color: #90ee90;
+}
+
+.metric-value.negative {
+    color: #dc3545;
+}
+
+.summary-card.total-portfolio .metric-value.negative {
+    color: #ffb3b3;
+}
+
+.metric-value.neutral {
+    color: #6c757d;
+}
+
+.summary-card.total-portfolio .metric-value.neutral {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Hidden state for performance metrics */
+.performance-metrics.hidden {
+    display: none;
+}
+
+/* Specific Item Display */
+.specific-item-display {
+    margin-bottom: 40px;
+}
+
+.specific-item-display .summary-card {
+    margin: 0 auto;
+    max-width: 400px;
+}
+
+/* Performance Section (if needed separately) */
+.performance-section {
+    margin-top: 40px;
+}
+
+.performance-section h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 25px;
+    color: #333;
+    text-align: center;
+}
+
+.performance-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.performance-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #e1e5e9;
+    position: relative;
+    overflow: hidden;
+}
+
+.performance-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.performance-card h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+}
+
+/* Responsive Design for Dashboard */
+@media (max-width: 1024px) {
+    .dashboard-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .account-info {
+        align-items: center;
+    }
+    
+    .portfolio-summary {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+    
+    .metric-row {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 180px;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-section {
+        padding: 20px;
+    }
+    
+    .dashboard-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .portfolio-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .summary-card {
+        padding: 20px;
+        min-height: 250px;
+    }
+    
+    .metric-row {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 160px;
+    }
+    
+    .metric-item {
+        padding: 6px 4px;
+        min-height: 45px;
+    }
+    
+    .metric-label {
+        font-size: 0.65rem;
+    }
+    
+    .metric-value {
+        font-size: 0.8rem;
+    }
+    
+    .performance-section h3 {
+        font-size: 1.3rem;
+    }
+    
+    .performance-card h4 {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .metric-row {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 140px;
+    }
+    
+    .currency-value {
+        flex-direction: column;
+        text-align: center;
+        gap: 5px;
+    }
+    
+    .value-amount {
+        font-size: 1.1rem;
+    }
+    
+    .summary-card {
+        min-height: 220px;
+    }
+    
+    .metric-item {
+        min-height: 40px;
+    }
+    
+    .metric-label {
+        font-size: 0.6rem;
+    }
+    
+    .metric-value {
+        font-size: 0.75rem;
+    }
 }
