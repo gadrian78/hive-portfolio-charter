@@ -11,7 +11,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 Hive Portfolio Charter 1.0</h1>
+            <h1>📊 Hive Portfolio Charter 1.5</h1>
             <p>Visualize your Hive blockchain portfolio performance over time</p>
         </div>
 
@@ -95,10 +95,147 @@
                 </div>
             </div>
         </div>
+        <!-- Dashboard Section -->
+        <div class="dashboard-section">
+            <div class="dashboard-header">
+                <h2>📊 Portfolio Dashboard</h2>
+                <div class="account-info">
+                    <span id="accountName" class="account-name">No account loaded</span>
+                    <span id="lastUpdate" class="last-update">Last updated: --</span>
+                </div>
+            </div>
+
+            <!-- Current Portfolio Values -->
+            <div class="portfolio-summary">
+                <div class="summary-card total-portfolio">
+                    <h3>💰 Total Portfolio</h3>
+                    <div class="value-display">
+                        <div class="currency-value">
+                            <span class="currency-label">USD</span>
+                            <span id="totalUsd" class="value-amount">$0.00</span>
+                        </div>
+                        <div class="currency-value">
+                            <span class="currency-label">HIVE</span>
+                            <span id="totalHive" class="value-amount">0.000</span>
+                        </div>
+                        <div class="currency-value">
+                            <span class="currency-label">BTC</span>
+                            <span id="totalBtc" class="value-amount">0.00000000</span>
+                        </div>
+                    </div>
+                    <div class="performance-metrics" id="totalPerformance">
+                        <h4>📈 Performance</h4>
+                        <div class="metric-row" id="totalMetricRow">
+                            <!-- Performance metrics will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="summary-card layer1-holdings">
+                    <h3><img class="hive-logo-icon" src="res/hive-logo.png" alt="Hive logo"/> Layer 1 Holdings</h3>
+                    <div class="value-display">
+                        <div class="currency-value">
+                            <span class="currency-label">USD</span>
+                            <span id="layer1Usd" class="value-amount">$0.00</span>
+                        </div>
+                        <div class="currency-value">
+                            <span class="currency-label">HIVE</span>
+                            <span id="layer1Hive" class="value-amount">0.000</span>
+                        </div>
+                        <div class="currency-value">
+                            <span class="currency-label">BTC</span>
+                            <span id="layer1Btc" class="value-amount">0.00000000</span>
+                        </div>
+                    </div>
+                    <div class="performance-metrics" id="layer1Performance">
+                        <h4>📈 Performance</h4>
+                        <div class="metric-row" id="layer1MetricRow">
+                            <!-- Performance metrics will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="summary-card diesel-pools">
+                    <h3>🔄 Diesel Pools</h3>
+                    <div class="value-display">
+                        <div class="currency-value">
+                            <span class="currency-label">USD</span>
+                            <span id="poolsUsd" class="value-amount">$0.00</span>
+                        </div>
+                        <div class="currency-value">
+                            <span class="currency-label">HIVE</span>
+                            <span id="poolsHive" class="value-amount">0.000</span>
+                        </div>
+                        <div class="currency-value">
+                            <span class="currency-label">BTC</span>
+                            <span id="poolsBtc" class="value-amount">0.00000000</span>
+                        </div>
+                    </div>
+                    <div class="performance-metrics" id="poolsPerformance">
+                        <h4>📈 Performance</h4>
+                        <div class="metric-row" id="poolsMetricRow">
+                            <!-- Performance metrics will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="summary-card regular-tokens">
+                    <h3>🪙 Regular Tokens</h3>
+                    <div class="value-display">
+                        <div class="currency-value">
+                            <span class="currency-label">USD</span>
+                            <span id="tokensUsd" class="value-amount">$0.00</span>
+                        </div>
+                        <div class="currency-value">
+                            <span class="currency-label">HIVE</span>
+                            <span id="tokensHive" class="value-amount">0.000</span>
+                        </div>
+                        <div class="currency-value">
+                            <span class="currency-label">BTC</span>
+                            <span id="tokensBtc" class="value-amount">0.00000000</span>
+                        </div>
+                    </div>
+                    <div class="performance-metrics" id="tokensPerformance">
+                        <h4>📈 Performance</h4>
+                        <div class="metric-row" id="tokensMetricRow">
+                            <!-- Performance metrics will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Specific Item Display (shown when specific token/pool is selected) -->
+            <div id="specificItemDisplay" class="specific-item-display" style="display: none;">
+                <div class="summary-card specific-item">
+                    <h3 id="specificItemTitle">🎯 Selected Item</h3>
+                    <div class="value-display">
+                        <div class="currency-value">
+                            <span class="currency-label">USD</span>
+                            <span id="specificUsd" class="value-amount">$0.00</span>
+                        </div>
+                        <div class="currency-value">
+                            <span class="currency-label">HIVE</span>
+                            <span id="specificHive" class="value-amount">0.000</span>
+                        </div>
+                        <div class="currency-value">
+                            <span class="currency-label">BTC</span>
+                            <span id="specificBtc" class="value-amount">0.00000000</span>
+                        </div>
+                    </div>
+                    <div class="performance-metrics" id="specificPerformance">
+                        <h4>📈 Performance</h4>
+                        <div class="metric-row" id="specificMetricRow">
+                            <!-- Performance metrics will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="footer">
-        <p>Created by <a href="https://peakd.com/@gadrian">@gadrian</a>.</p>
-        <p>You can use <a href="https://github.com/gadrian78/he-tokens-snapshot">Hive Portfolio Tracker</a> to generate Snapshot files automatically/manually. Runs locally in Linux.</p>
-        <p>Or you can create them yourself or using another tool.</p>
+            <p>Created by <a href="https://peakd.com/@gadrian">@gadrian</a>.</p>
+            <p>You can use <a href="https://github.com/gadrian78/he-tokens-snapshot">Hive Portfolio Tracker</a> to generate Snapshot files automatically/manually. Runs locally in Linux.</p>
+            <p>Or you can create them yourself or using another tool.</p>
         </div>
     </div>
     <script src="scripts/portfolio-charts-D3.js"></script>
