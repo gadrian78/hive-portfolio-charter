@@ -389,6 +389,170 @@ class HivePortfolioCharter {
         return filtered;
     }
 
+    // calculates the ratio between currencies at a reference point and creates proportional Y-axis domains for all three charts
+    calculateSynchronizedScales(data) {
+        if (data.length === 0) return null;
+
+        // Find min/max values for each currency
+        const usdValues = data.map(d => d.usd);
+        const hiveValues = data.map(d => d.hive);
+        const btcValues = data.map(d => d.btc);
+
+        const usdMin = Math.min(...usdValues);
+        const usdMax = Math.max(...usdValues);
+        const hiveMin = Math.min(...hiveValues);
+        const hiveMax = Math.max(...hiveValues);
+        const btcMin = Math.min(...btcValues);
+        const btcMax = Math.max(...btcValues);
+
+        // Calculate ranges for each currency
+        const usdRange = usdMax - usdMin;
+        const hiveRange = hiveMax - hiveMin;
+        const btcRange = btcMax - btcMin;
+
+        // Get price ratios from the latest data point to convert all ranges to USD equivalent
+        const latestData = data[data.length - 1];
+        let hiveToUsdRatio = 1;
+        let btcToUsdRatio = 1;
+        
+        // Extract price information from snapshots metadata
+        if (latestData.snapshots && latestData.snapshots.length > 0) {
+            const snapshot = latestData.snapshots[0];
+            const prices = snapshot.metadata?.prices;
+            
+            if (prices) {
+                if (prices.hive_usd && prices.hive_usd > 0) {
+                    hiveToUsdRatio = prices.hive_usd;
+                }
+                if (prices.btc_usd && prices.btc_usd > 0) {
+                    btcToUsdRatio = prices.btc_usd;
+                }
+            }
+        }
+        
+        // If we don't have price data, estimate ratios from the portfolio values
+        if (hiveToUsdRatio === 1 || btcToUsdRatio === 1) {
+            // Find a data point where all three currencies have non-zero values
+            for (const dataPoint of data) {
+                if (dataPoint.usd > 0 && dataPoint.hive > 0 && dataPoint.btc > 0) {
+                    if (hiveToUsdRatio === 1) {
+                        hiveToUsdRatio = dataPoint.usd / dataPoint.hive;
+                    }
+                    if (btcToUsdRatio === 1) {
+                        btcToUsdRatio = dataPoint.usd / dataPoint.btc;
+                    }
+                    break;
+                }
+            }
+        }
+
+        // Convert all ranges to USD equivalent for comparison
+        const usdEquivalentRanges = {
+            usd: usdRange,
+            hive: hiveRange * hiveToUsdRatio,
+            btc: btcRange * btcToUsdRatio
+        };
+
+        // Find which currency has the widest fluctuation range in USD equivalent
+        let baseCurrency, baseMin, baseMax, baseRange;
+        
+        if (usdEquivalentRanges.usd >= usdEquivalentRanges.hive && usdEquivalentRanges.usd >= usdEquivalentRanges.btc) {
+            baseCurrency = 'usd';
+            baseMin = usdMin;
+            baseMax = usdMax;
+            baseRange = usdRange;
+        } else if (usdEquivalentRanges.hive >= usdEquivalentRanges.btc) {
+            baseCurrency = 'hive';
+            baseMin = hiveMin;
+            baseMax = hiveMax;
+            baseRange = hiveRange;
+        } else {
+            baseCurrency = 'btc';
+            baseMin = btcMin;
+            baseMax = btcMax;
+            baseRange = btcRange;
+        }
+
+        // Add padding to the base range
+        const padding = baseRange * 0.1;
+        let baseDomainMin = baseMin - padding;
+        let baseDomainMax = baseMax + padding;
+
+        // Handle special cases for base currency
+        if (baseMin >= 0 && baseMin < baseMax * 0.1) {
+            baseDomainMin = 0;
+        }
+
+        if (baseMin === baseMax) {
+            const centerValue = baseMin;
+            const range = Math.max(Math.abs(centerValue) * 0.1, 1);
+            baseDomainMin = centerValue - range;
+            baseDomainMax = centerValue + range;
+        }
+
+        const baseDomainRange = baseDomainMax - baseDomainMin;
+
+        // For non-base currencies, center them within the same visual range
+        const result = {};
+
+        ['usd', 'hive', 'btc'].forEach(currency => {
+            if (currency === baseCurrency) {
+                // Base currency uses its calculated domain
+                result[currency] = { min: baseDomainMin, max: baseDomainMax };
+            } else {
+                // Other currencies are centered within the same visual range
+                const currMin = currency === 'usd' ? usdMin : (currency === 'hive' ? hiveMin : btcMin);
+                const currMax = currency === 'usd' ? usdMax : (currency === 'hive' ? hiveMax : btcMax);
+                const currRange = currMax - currMin;
+                
+                if (currRange === 0) {
+                    // Handle flat line case - center the value
+                    const centerValue = currMin;
+                    const halfRange = baseDomainRange / 2;
+                    result[currency] = {
+                        min: centerValue - halfRange,
+                        max: centerValue + halfRange
+                    };
+                } else {
+                    // Center the currency's range within the base domain range
+                    const currCenter = (currMin + currMax) / 2;
+                    
+                    // Calculate how much visual space this currency should get relative to the base currency
+                    // Convert the base domain range to this currency's equivalent
+                    let targetRangeInCurrency;
+                    if (baseCurrency === 'usd') {
+                        if (currency === 'hive') {
+                            targetRangeInCurrency = baseDomainRange / hiveToUsdRatio;
+                        } else { // btc
+                            targetRangeInCurrency = baseDomainRange / btcToUsdRatio;
+                        }
+                    } else if (baseCurrency === 'hive') {
+                        if (currency === 'usd') {
+                            targetRangeInCurrency = baseDomainRange * hiveToUsdRatio;
+                        } else { // btc
+                            targetRangeInCurrency = baseDomainRange * hiveToUsdRatio / btcToUsdRatio;
+                        }
+                    } else { // baseCurrency === 'btc'
+                        if (currency === 'usd') {
+                            targetRangeInCurrency = baseDomainRange * btcToUsdRatio;
+                        } else { // hive
+                            targetRangeInCurrency = baseDomainRange * btcToUsdRatio / hiveToUsdRatio;
+                        }
+                    }
+                    
+                    const halfTargetRange = targetRangeInCurrency / 2;
+                    
+                    result[currency] = {
+                        min: currCenter - halfTargetRange,
+                        max: currCenter + halfTargetRange
+                    };
+                }
+            }
+        });
+
+        return result;
+    }
+
     updateCharts() {
         if (this.rawData.length === 0) return;
 
@@ -437,17 +601,20 @@ class HivePortfolioCharter {
         // Apply unrealistic drop filtering (this resets for each new selection)
         chartData = this.filterUnrealisticDrops(chartData, snapshotType, category);
 
-        // Update each chart
+        // Calculate synchronized scales for all charts
+        const synchronizedScales = this.calculateSynchronizedScales(chartData);
+
+        // Update each chart with synchronized scales
         Object.keys(this.charts).forEach(chartId => {
             const currency = this.charts[chartId].currency.toLowerCase();
-            this.updateChart(chartId, chartData, currency);
+            this.updateChart(chartId, chartData, currency, synchronizedScales);
         });
 
         // Update dashboard
         this.updateDashboard(chartData, snapshotType, category, specificItem);
     }
 
-    updateChart(chartId, data, currency) {
+    updateChart(chartId, data, currency, synchronizedScales = null) {
         const chart = this.charts[chartId];
         const g = chart.g;
         const width = chart.width;
@@ -476,7 +643,7 @@ class HivePortfolioCharter {
             snapshots: d.snapshots
         }));
 
-        // Create scales with proper domain handling
+        // Create x-scale
         let xScale;
         if (chartData.length === 1) {
             const singleDate = chartData[0].date;
@@ -490,36 +657,39 @@ class HivePortfolioCharter {
                 .range([0, width]);
         }
 
-
-        // Improve Y-scale calculation
-        const values = chartData.map(d => d.value);
-        const minValue = Math.min(...values);
-        const maxValue = Math.max(...values);
-        
+        // Create Y-scale - use synchronized scales if available
         let yScale;
-        if (minValue === maxValue) {
-            // For flat line, create a scale that shows the value in the middle
-            const centerValue = minValue;
-            const range = Math.max(Math.abs(centerValue) * 0.1, 1); // 10% of value or minimum 1
+        if (synchronizedScales && synchronizedScales[currency]) {
             yScale = d3.scaleLinear()
-                .domain([centerValue - range, centerValue + range])
+                .domain([synchronizedScales[currency].min, synchronizedScales[currency].max])
                 .range([height, 0]);
         } else {
-            // For normal data, add padding and ensure 0 is included if appropriate
-            const range = maxValue - minValue;
-            const padding = range * 0.1; // 10% padding
+            // Fallback to original Y-scale calculation
+            const values = chartData.map(d => d.value);
+            const minValue = Math.min(...values);
+            const maxValue = Math.max(...values);
             
-            let domainMin = minValue - padding;
-            let domainMax = maxValue + padding;
-            
-            // If all values are positive and close to 0, include 0 in domain
-            if (minValue >= 0 && minValue < maxValue * 0.1) {
-                domainMin = 0;
+            if (minValue === maxValue) {
+                const centerValue = minValue;
+                const range = Math.max(Math.abs(centerValue) * 0.1, 1);
+                yScale = d3.scaleLinear()
+                    .domain([centerValue - range, centerValue + range])
+                    .range([height, 0]);
+            } else {
+                const range = maxValue - minValue;
+                const padding = range * 0.1;
+                
+                let domainMin = minValue - padding;
+                let domainMax = maxValue + padding;
+                
+                if (minValue >= 0 && minValue < maxValue * 0.1) {
+                    domainMin = 0;
+                }
+                
+                yScale = d3.scaleLinear()
+                    .domain([domainMin, domainMax])
+                    .range([height, 0]);
             }
-            
-            yScale = d3.scaleLinear()
-                .domain([domainMin, domainMax])
-                .range([height, 0]);
         }
 
         // Create axes
