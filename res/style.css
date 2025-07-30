@@ -101,6 +101,22 @@ body {
     left: -9999px;
 }
 
+.clear-button {
+    padding: 12px;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: transform 0.2s ease;
+    font-size: 14px;
+}
+
+.clear-button:hover {
+    transform: translateY(-2px);
+}
+
 .control-item .file-input-label {
     color: white;
     display: flex;
