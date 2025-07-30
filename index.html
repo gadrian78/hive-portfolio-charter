@@ -11,14 +11,14 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 Hive Portfolio Charter 1.51</h1>
+            <h1>📊 Hive Portfolio Charter 1.53</h1>
             <p>Visualize your Hive blockchain portfolio performance over time</p>
         </div>
 
         <div class="controls">
             <div class="control-group">
                 <div class="control-item">
-                    <label for="fileInput">📁 Load Snapshot Files</label>
+                    <label for="fileInput">📁 Load More Snapshot Files</label>
                     <div class="file-input-container">
                         <input type="file" id="fileInput" multiple accept=".json">
                         <label for="fileInput" class="file-input-label">
@@ -67,6 +67,20 @@
                 <div class="control-item">
                     <label for="dateEnd">📅 End Date</label>
                     <input type="date" id="dateEnd">
+                </div>
+
+                <div class="control-item">
+                    <label for="chartsMode">📊 Charts</label>
+                    <select id="chartsMode">
+                        <option value="value_only">Value Only (Y axis)</option>
+                        <option value="value_amount">Value (left Y axis) + Amount (right Y axis, where applicable)</option>
+                        <option value="value_price">Value (left Y axis) + Price (right Y axis, where applicable)</option>
+                    </select>
+                </div>
+
+                <div class="control-item">
+                    <label>🗑️ "Unload" Snapshots</label>
+                    <button id="clearData" class="clear-button">Clear Data</button>
                 </div>
             </div>
 
@@ -238,6 +252,6 @@
             <p>Or you can create them yourself or using another tool.</p>
         </div>
     </div>
-    <script src="scripts/portfolio-charts-D3.js"></script>
+    <script type="module" src="scripts/dashboard.js"></script>
 </body>
 </html>
