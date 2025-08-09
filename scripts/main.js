@@ -66,16 +66,23 @@ export class HivePortfolioCharter {
     
     // Properly handle window resize
     handleResize() {
-        // Force recalculation of all chart dimensions
-        Object.keys(this.charts).forEach(chartId => {
-            // Reset margins to default to force recalculation
-            this.setupChart(chartId, 80, 80);
-        });
+        // Add debouncing flag to prevent multiple simultaneous resize operations
+        if (this.isResizing) return;
+        this.isResizing = true;
         
-        // Update charts with fresh dimensions
-        this.updateCharts();
+        setTimeout(() => {
+            // Force recalculation of all chart dimensions with current viewport
+            Object.keys(this.charts).forEach(chartId => {
+                // Reset margins to allow fresh calculation
+                this.setupChart(chartId, 80, 80);
+            });
+            
+            // Update charts with fresh dimensions
+            this.updateCharts();
+            
+            this.isResizing = false;
+        }, 100);
     }
-
 
     initializeCharts() {
         const chartIds = ['usdChart', 'hiveChart', 'btcChart'];
@@ -99,21 +106,66 @@ export class HivePortfolioCharter {
     setupChart(chartId, suggestedLeftMargin = 80, suggestedRightMargin = 80) {
         const container = this.charts[chartId].container;
         
-        // Use dynamic margin calculation
-        const margin = { 
-            top: 20, 
-            right: Math.min(120, Math.max(60, suggestedRightMargin)), // Dynamic right margin
-            bottom: 80, 
-            left: Math.min(120, Math.max(60, suggestedLeftMargin)) 
-        };
+        // Get viewport width for mobile detection
+        const viewportWidth = window.innerWidth;
+        const isMobile = viewportWidth <= 768;
+        const isVerySmall = viewportWidth <= 480;
         
         // Get the actual current width of the container
         const containerRect = container.node().getBoundingClientRect();
-        const containerWidth = Math.max(containerRect.width || 800, 400); // Minimum width
-        const containerHeight = 350;
+        let containerWidth = containerRect.width;
+        
+        // Handle cases where container width is 0 or not available
+        if (!containerWidth || containerWidth === 0) {
+            containerWidth = viewportWidth > 768 ? 800 : Math.min(viewportWidth - 40, 400);
+        }
+        
+        // Set mobile-friendly minimum widths
+        let minWidth;
+        if (isVerySmall) {
+            minWidth = Math.min(280, viewportWidth - 40); // Leave 20px padding on each side
+        } else if (isMobile) {
+            minWidth = Math.min(320, viewportWidth - 40);
+        } else {
+            minWidth = 400;
+        }
+        
+        containerWidth = Math.max(containerWidth, minWidth);
+        
+        // Adjust margins for mobile
+        let leftMargin, rightMargin;
+        
+        if (isVerySmall) {
+            leftMargin = Math.min(50, Math.max(35, suggestedLeftMargin * 0.6));
+            rightMargin = Math.min(50, Math.max(35, suggestedRightMargin * 0.6));
+        } else if (isMobile) {
+            leftMargin = Math.min(70, Math.max(45, suggestedLeftMargin * 0.8));
+            rightMargin = Math.min(70, Math.max(45, suggestedRightMargin * 0.8));
+        } else {
+            leftMargin = Math.min(120, Math.max(60, suggestedLeftMargin));
+            rightMargin = Math.min(120, Math.max(60, suggestedRightMargin));
+        }
+        
+        const margin = { 
+            top: 20, 
+            right: rightMargin,
+            bottom: isMobile ? 60 : 80, // Reduce bottom margin on mobile
+            left: leftMargin
+        };
+        
+        const containerHeight = isMobile ? 280 : 350; // Slightly reduce height on mobile
         
         const width = containerWidth - margin.left - margin.right;
         const height = containerHeight - margin.top - margin.bottom;
+
+        // Ensure minimum chart area
+        if (width < 150 || height < 100) {
+            console.warn(`Chart ${chartId} dimensions too small: ${width}x${height}`);
+            // Use absolute minimum margins if chart area is too small
+            margin.left = 30;
+            margin.right = 30;
+            margin.bottom = 40;
+        }
 
         // Clear any existing content
         container.selectAll("*").remove();
@@ -122,10 +174,10 @@ export class HivePortfolioCharter {
             .append("svg")
             .attr("width", containerWidth)
             .attr("height", containerHeight)
-            // Removed viewBox to prevent scaling conflicts
             .style("width", "100%")
             .style("height", "auto")
-            .style("max-width", "100%");
+            .style("max-width", "100%")
+            .style("display", "block"); // Ensure proper display
 
         const g = svg.append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
@@ -133,8 +185,8 @@ export class HivePortfolioCharter {
         // Store dimensions and elements for later use
         this.charts[chartId].svg = svg;
         this.charts[chartId].g = g;
-        this.charts[chartId].width = width;
-        this.charts[chartId].height = height;
+        this.charts[chartId].width = Math.max(width, 150); // Ensure minimum width
+        this.charts[chartId].height = Math.max(height, 100); // Ensure minimum height
         this.charts[chartId].margin = margin;
         this.charts[chartId].containerWidth = containerWidth;
         this.charts[chartId].containerHeight = containerHeight;
