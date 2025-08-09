@@ -98,6 +98,7 @@ export class HivePortfolioCharter {
                 container: d3.select(`#${id}`)
             };
             this.setupChart(id);
+            return;
             const data = [];
             this.updateChart(id, data, currencies[index]);
         });
@@ -108,6 +109,7 @@ export class HivePortfolioCharter {
         
         // Get viewport width for mobile detection
         const viewportWidth = window.innerWidth;
+        console.log(viewportWidth);
         const isMobile = viewportWidth <= 768;
         const isVerySmall = viewportWidth <= 480;
         
