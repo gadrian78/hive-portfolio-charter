@@ -256,22 +256,24 @@ export class HivePortfolioCharter {
         const widthNeeded = minRequiredWidth - currentWidth;
         
         messageDiv.innerHTML = `
-            <div class="landscape-content">
-                <div class="landscape-icon">
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="2" y="6" width="20" height="8" rx="2"/>
-                        <path d="m6 12-3-3 3-3"/>
-                        <path d="m18 12 3-3-3-3"/>
-                    </svg>
-                </div>
-                <h3>Rotate Device to View Charts</h3>
-                <p>Charts require a minimum width of ${minRequiredWidth}px for optimal viewing.</p>
-                <p>Your current screen width is ${currentWidth}px (need ${widthNeeded}px more).</p>
-                <div class="landscape-instruction">
-                    <strong>Please rotate your device to landscape orientation to view the charts.</strong>
-                </div>
-                <div class="landscape-note">
-                    The user options and dashboard above are still fully functional in portrait mode.
+            <div class="landscape-message">
+                <div class="landscape-content">
+                    <div class="landscape-icon">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="6" width="20" height="8" rx="2"/>
+                            <path d="m6 12-3-3 3-3"/>
+                            <path d="m18 12 3-3-3-3"/>
+                        </svg>
+                    </div>
+                    <h3>Rotate Device to View Charts</h3>
+                    <p>Charts require a minimum width of ${minRequiredWidth}px for optimal viewing.</p>
+                    <p>Your current screen width is ${currentWidth}px (need ${widthNeeded}px more).</p>
+                    <div class="landscape-instruction">
+                        <strong>Please rotate your device to landscape orientation to view the charts.</strong>
+                    </div>
+                    <div class="landscape-note">
+                        The user options and dashboard above are still fully functional in portrait mode.
+                    </div>
                 </div>
             </div>
         `;
