@@ -445,6 +445,151 @@ body {
     }
 }
 
+/* Additional mobile adjustments */
+@media (max-width: 360px) {
+    .landscape-message {
+        padding: 30px 15px;
+        margin: 25px 5px;
+    }
+    
+    .landscape-message h3 {
+        font-size: 1.3rem;
+    }
+    
+    .landscape-instruction {
+        padding: 12px;
+    }
+    
+    .landscape-icon svg {
+        width: 48px;
+        height: 48px;
+    }
+}
+
+/* Landscape requirement message styles - improved visibility and centering */
+.landscape-message {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 50px 30px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    margin: 40px auto;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    display: none;
+    max-width: 600px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+}
+
+.landscape-message::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    50% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
+
+.landscape-content {
+    max-width: 500px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+}
+
+.landscape-icon {
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 25px;
+    animation: rotate-hint 4s ease-in-out infinite;
+}
+
+.landscape-icon svg {
+    display: block;
+    margin: 0 auto;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+@keyframes rotate-hint {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(-8deg) scale(1.05); }
+    75% { transform: rotate(8deg) scale(1.05); }
+}
+
+.landscape-message h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.landscape-message p {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 15px;
+    line-height: 1.6;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.landscape-instruction {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 20px;
+    border-radius: 12px;
+    margin: 25px 0;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.landscape-instruction strong {
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.landscape-note {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-style: italic;
+    margin-top: 20px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Hide charts container when landscape message is shown */
+.charts-container.hidden {
+    display: none !important;
+}
+
+/* Show charts when in landscape on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .landscape-message {
+        display: none !important;
+    }
+    
+    .charts-container {
+        display: grid !important;
+    }
+}
+
+/* Additional safety: ensure charts are visible on wider screens */
+@media (min-width: 481px) {
+    .landscape-message {
+        display: none !important;
+    }
+    
+    .charts-container {
+        display: grid !important;
+    }
+}
 
 /* Dashboard Section Styles */
 .dashboard-section {
