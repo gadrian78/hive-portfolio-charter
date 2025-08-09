@@ -110,6 +110,7 @@ export class HivePortfolioCharter {
         // Get viewport width for mobile detection
         const viewportWidth = window.innerWidth;
         console.log(viewportWidth);
+        return;
         const isMobile = viewportWidth <= 768;
         const isVerySmall = viewportWidth <= 480;
         
