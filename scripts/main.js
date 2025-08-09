@@ -233,9 +233,9 @@ export class HivePortfolioCharter {
             messageDiv.className = 'landscape-message';
             
             // Insert after the controls section
-            const controlsSection = document.querySelector('.controls');
-            if (controlsSection) {
-                controlsSection.parentNode.insertBefore(messageDiv, controlsSection.nextSibling);
+            const dashboardSection = document.querySelector('.dashboard-section');
+            if (dashboardSection) {
+                dashboardSection.parentNode.insertBefore(messageDiv, dashboardSection.nextSibling);
             } else {
                 // Fallback: append to container
                 document.querySelector('.container').appendChild(messageDiv);
