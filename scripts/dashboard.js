@@ -330,7 +330,7 @@ export class PortfolioDashboard extends HivePortfolioCharter {
             specificTitle.textContent = `${emoji} ${itemName}`;
 
             // Update values
-            const values = this.extractDataForCategory(latestData.snapshots, category, specificItem);
+            const values = extractDataForCategory(latestData.snapshots, category, specificItem);
             this.updateCurrencyValues('specific', values);
         } else {
             specificDisplay.style.display = 'none';

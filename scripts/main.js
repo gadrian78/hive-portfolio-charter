@@ -2,9 +2,13 @@
 // Created by https://peakd.com/@gadrian with the support of AI.
 //--------------------------------------------------------------
 
-import {showStatus, clearStatus, readJSONFile, validateSnapshotConsistency, removeDuplicateSnapshots,
-        extractDataForCategory, filterUnrealisticDrops, resetDashboardToDefaults,
-        getPriceInfo, getTokenPriceInfo, getDieselPoolInfo, getTokenQuantity, getPoolShares} from './helper-functions.js';
+import { calculateMaxLeftLabelWidth, calculateMaxLabelWidth, calculateOptimalDecimalPlacesRightYaxis,
+         createSecondaryYScale, createXScale, createYScale, addGridLines, addAxes, addLineAndPoints,
+         generateTooltipContent, generateSecondaryTooltipContent, updateSecondaryChartLabel, ensurePrimaryChartOnTop } from './charts.js';
+
+import { showStatus, clearStatus, readJSONFile, validateSnapshotConsistency, removeDuplicateSnapshots,
+         extractDataForCategory, filterUnrealisticDrops, resetDashboardToDefaults,
+         getAmountData, getPriceData } from './helper-functions.js';
 
 export class HivePortfolioCharter {
     constructor() {
@@ -47,30 +51,69 @@ export class HivePortfolioCharter {
         document.getElementById('specificItem').addEventListener('change', () => this.updateCharts());
         document.getElementById('dateStart').addEventListener('change', () => this.updateCharts());
         document.getElementById('dateEnd').addEventListener('change', () => this.updateCharts());
+        document.getElementById('chartsType').addEventListener('change', () => this.handleChartsTypeChange());
         document.getElementById('clearData').addEventListener('click', () => this.handleClearData());
+        
+        // Improved resize handling with debouncing
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                this.handleResize();
+            }, 150); // Debounce resize events
+        });
     }
+    
+    // Properly handle window resize
+    handleResize() {
+        // Force recalculation of all chart dimensions
+        Object.keys(this.charts).forEach(chartId => {
+            // Reset margins to default to force recalculation
+            this.setupChart(chartId, 80, 80);
+        });
+        
+        // Update charts with fresh dimensions
+        this.updateCharts();
+    }
+
 
     initializeCharts() {
         const chartIds = ['usdChart', 'hiveChart', 'btcChart'];
         const currencies = ['USD', 'HIVE', 'BTC'];
         const colors = ['#2563eb', '#dc2626', '#f59e0b'];
+        const complementColors = ['#10b981', '#7c3aed', '#0ea5e9'];
 
         chartIds.forEach((id, index) => {
             this.charts[id] = {
                 currency: currencies[index],
                 color: colors[index],
+                secondaryColor: complementColors[index],
                 container: d3.select(`#${id}`)
             };
             this.setupChart(id);
+            const data = [];
+            this.updateChart(id, data, currencies[index]);
         });
     }
 
-    setupChart(chartId) {
+    setupChart(chartId, suggestedLeftMargin = 80, suggestedRightMargin = 80) {
         const container = this.charts[chartId].container;
-        const margin = { top: 20, right: 30, bottom: 80, left: 100 };
-        const containerWidth = container.node().clientWidth || 800;
+        
+        // Use dynamic margin calculation
+        const margin = { 
+            top: 20, 
+            right: Math.min(120, Math.max(60, suggestedRightMargin)), // Dynamic right margin
+            bottom: 80, 
+            left: Math.min(120, Math.max(60, suggestedLeftMargin)) 
+        };
+        
+        // Get the actual current width of the container
+        const containerRect = container.node().getBoundingClientRect();
+        const containerWidth = Math.max(containerRect.width || 800, 400); // Minimum width
+        const containerHeight = 350;
+        
         const width = containerWidth - margin.left - margin.right;
-        const height = 350 - margin.top - margin.bottom;
+        const height = containerHeight - margin.top - margin.bottom;
 
         // Clear any existing content
         container.selectAll("*").remove();
@@ -78,10 +121,11 @@ export class HivePortfolioCharter {
         const svg = container
             .append("svg")
             .attr("width", containerWidth)
-            .attr("height", 350)
-            .attr("viewBox", `0 0 ${containerWidth} 350`)
-            .style("max-width", "100%")
-            .style("height", "auto");
+            .attr("height", containerHeight)
+            // Removed viewBox to prevent scaling conflicts
+            .style("width", "100%")
+            .style("height", "auto")
+            .style("max-width", "100%");
 
         const g = svg.append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
@@ -92,6 +136,8 @@ export class HivePortfolioCharter {
         this.charts[chartId].width = width;
         this.charts[chartId].height = height;
         this.charts[chartId].margin = margin;
+        this.charts[chartId].containerWidth = containerWidth;
+        this.charts[chartId].containerHeight = containerHeight;
     }
 
     async handleFileInput(event) {
@@ -105,7 +151,7 @@ export class HivePortfolioCharter {
             const results = await Promise.all(filePromises);
 
             const validSnapshots = results.filter(result => result !== null);
-            
+
             if (validSnapshots.length === 0) {
                 showStatus('No valid JSON files found', 'error');
                 return;
@@ -208,6 +254,26 @@ export class HivePortfolioCharter {
         this.updateCharts();
     }
 
+    handleChartsTypeChange() {
+        const chartsType = document.getElementById('chartsType').value;
+        const category = document.getElementById('dataCategory').value;
+        const specificItem = document.getElementById('specificItem').value;
+        if (chartsType ==='value_amount' || chartsType ==='value_price' && category === 'specific_token' || category === 'specific_pool') {
+            if (chartsType ==='value_amount')
+                if (category === 'specific_token')
+                    updateSecondaryChartLabel('amount', {token: specificItem});
+                else if (category === 'specific_pool')
+                    updateSecondaryChartLabel('shares', {diesel_pool: specificItem});
+                else updateSecondaryChartLabel('');
+            else if (chartsType ==='value_price')
+                if (category === 'specific_token')
+                    updateSecondaryChartLabel('price', {token: specificItem});
+                else updateSecondaryChartLabel('');
+        }
+        else updateSecondaryChartLabel('');
+        this.updateCharts();
+    }
+
     //removing loaded snapshots from memory, and re-initialitations
     handleClearData() {
         if (this.rawData.length === 0) {
@@ -232,8 +298,10 @@ export class HivePortfolioCharter {
             
             // Clear all charts
             Object.keys(this.charts).forEach(chartId => {
-                this.charts[chartId].g.selectAll("*").remove();
+                this.updateChart(chartId, this.rawData, this.charts[chartId].currency.toLowerCase());
             });
+
+            updateSecondaryChartLabel('');
             
             // Clear status and show confirmation
             clearStatus();
@@ -432,8 +500,14 @@ export class HivePortfolioCharter {
     }
 
     updateCharts() {
-        if (this.rawData.length === 0) return;
-
+        if (this.rawData.length === 0) {
+            Object.keys(this.charts).forEach(chartId => {
+                const currency = this.charts[chartId].currency.toLowerCase();
+                this.updateChart(chartId, this.rawData, currency);
+            });
+            return;
+        }
+        
         // Clear any previous filtering status messages
         console.clear();
 
@@ -495,238 +569,147 @@ export class HivePortfolioCharter {
         this.updateDashboard(chartData, snapshotType, category, specificItem);
     }
 
-    updateChart(chartId, data, currency, synchronizedScales = null) {
+    updateChart(chartId, data, currency, synchronizedScales = null, recursionDepth = 0) {
         const chart = this.charts[chartId];
         const g = chart.g;
-        const width = chart.width;
-        const height = chart.height;
+        let { width, height } = chart;
         const color = chart.color;
+        
+        // Prevent infinite recursion
+        if (recursionDepth > 5) {
+            console.warn(`Maximum recursion depth reached for chart ${chartId}.`);
+            return;
+        }
+
+        // Get chart type and specific item
+        const chartsType = document.getElementById('chartsType').value;
+        const category = document.getElementById('dataCategory').value;
+        const specificItem = document.getElementById('specificItem').value;
 
         // Clear previous content
         g.selectAll("*").remove();
 
-        if (data.length === 0) {
-            // Show "No data" message
+        if (!data || data.length === 0) {
             g.append("text")
                 .attr("x", width / 2)
                 .attr("y", height / 2)
                 .attr("text-anchor", "middle")
                 .style("font-size", "16px")
                 .style("fill", "#666")
-                .text("No data available");
+                .text("No snapshots loaded");
             return;
         }
+        
+        if ((category === 'specific_token' || category === 'specific_pool') && !specificItem) {
+            g.append("text")
+                .attr("x", width / 2)
+                .attr("y", height / 2)
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .style("fill", "#666")
+                .text("Select specific item!");
+            return;
+        }       
 
-        // Prepare data for this currency
+        // Prepare primary data (value)
         const chartData = data.map(d => ({
             date: d.date,
             value: d[currency],
             snapshots: d.snapshots
         }));
 
-        // Create x-scale
-        let xScale;
-        if (chartData.length === 1) {
-            const singleDate = chartData[0].date;
-            const pad = 1000 * 60 * 60 * 12; // 12 hours padding
-            xScale = d3.scaleTime()
-                .domain([new Date(singleDate.getTime() - pad), new Date(singleDate.getTime() + pad)])
-                .range([0, width]);
-        } else {
-            xScale = d3.scaleTime()
-                .domain(d3.extent(chartData, d => d.date))
-                .range([0, width]);
+        // Prepare secondary data based on chartsType
+        let secondaryData = null;
+        let secondaryColor = chart.secondaryColor;
+
+        if (chartsType !== 'value_only' && specificItem) {
+            if (chartsType === 'value_amount' && (category === 'specific_token' || category === 'specific_pool')) {
+                // Extract amount data
+                secondaryData = data.map(d => {
+                    const amount = getAmountData(d, specificItem, category);
+                    return {
+                        date: d.date,
+                        value: amount || 0,
+                        snapshots: d.snapshots
+                    };
+                });
+                if (category === 'specific_token')
+                    updateSecondaryChartLabel('amount', {token: specificItem});
+                else updateSecondaryChartLabel('shares', {diesel_pool: specificItem});
+            } else if (chartsType === 'value_price' && category === 'specific_token') {
+                // Extract price data
+                secondaryData = data.map(d => {
+                    const price = getPriceData(d, specificItem, currency);
+                    return {
+                        date: d.date,
+                        value: price || 0,
+                        snapshots: d.snapshots
+                    };
+                });
+                updateSecondaryChartLabel('price', {token: specificItem});            }
         }
 
-        // Create Y-scale - use synchronized scales if available
-        let yScale;
-        if (synchronizedScales && synchronizedScales[currency]) {
-            yScale = d3.scaleLinear()
-                .domain([synchronizedScales[currency].min, synchronizedScales[currency].max])
-                .range([height, 0]);
-        } else {
-            // Fallback to original Y-scale calculation
-            const values = chartData.map(d => d.value);
-            const minValue = Math.min(...values);
-            const maxValue = Math.max(...values);
+        // Create scales
+        const xScale = createXScale(chartData, width);
+        const yScaleLeft = createYScale(chartData, height, synchronizedScales, currency);
+        
+        let yScaleRight = null;
+        if (secondaryData) {
+            yScaleRight = createSecondaryYScale(secondaryData, height);
+        }
+        
+        let needsMarginAdjustment = false;
+        let suggestedLeftMargin = 80;
+        
+        const maxLeftLabelWidth = calculateMaxLeftLabelWidth(yScaleLeft, currency);
+        suggestedLeftMargin = Math.max(60, maxLeftLabelWidth + 10);
+
+        const currentLeftMargin = chart.margin.left;
+
+        let suggestedRightMargin = 80;
+        
+        if (yScaleRight) {
+            const [minValue, maxValue] = yScaleRight.domain();
             
-            if (minValue === maxValue) {
-                const centerValue = minValue;
-                const range = Math.max(Math.abs(centerValue) * 0.1, 1);
-                yScale = d3.scaleLinear()
-                    .domain([centerValue - range, centerValue + range])
-                    .range([height, 0]);
-            } else {
-                const range = maxValue - minValue;
-                const padding = range * 0.1;
-                
-                let domainMin = minValue - padding;
-                let domainMax = maxValue + padding;
-                
-                if (minValue >= 0 && minValue < maxValue * 0.1) {
-                    domainMin = 0;
-                }
-                
-                yScale = d3.scaleLinear()
-                    .domain([domainMin, domainMax])
-                    .range([height, 0]);
-            }
+            // Use the same calculation logic as in addAxes
+            const decimalPlaces = calculateOptimalDecimalPlacesRightYaxis(minValue, maxValue, currency, chartsType, category, specificItem);
+            const maxLabelWidth = calculateMaxLabelWidth(yScaleRight, decimalPlaces, currency, chartsType);
+            suggestedRightMargin = Math.max(60, maxLabelWidth + 10);
+        }
+        const currentRightMargin = chart.margin.right;
+        
+        // Check if we need significant margin adjustment
+        if (Math.abs(currentRightMargin - suggestedRightMargin) > 20 || 
+            Math.abs(currentLeftMargin - suggestedLeftMargin) > 20) {
+            needsMarginAdjustment = true;
         }
 
-        // Create axes
-        let xAxis;
-        if (chartData.length <= 8) {
-            xAxis = d3.axisBottom(xScale)
-                .tickFormat(d3.timeFormat("%d %b %y"))
-                .tickValues(chartData.map(d => d.date))  // Force exact dates
-        } else {
-            xAxis = d3.axisBottom(xScale)
-            .ticks(5)
-            .tickFormat(d3.timeFormat('%d %b %y'));
+        // If we need margin adjustment, re-setup the chart and restart
+        if (needsMarginAdjustment && recursionDepth < 3) {
+            this.setupChart(chartId, suggestedLeftMargin, suggestedRightMargin);
+            // Recursively call updateChart with the new dimensions
+            this.updateChart(chartId, data, currency, synchronizedScales, recursionDepth + 1);
+            return;
         }
+        
+        // Update width and height after potential margin changes
+        width = chart.width;
+        height = chart.height;
 
-        const yAxis = d3.axisLeft(yScale)
-            .ticks(5)
-            .tickFormat(d => {
-                if (currency === 'usd') return '$' + d3.format(",.2f")(d);
-                if (currency === 'hive') return d3.format(",.3f")(d) + ' HIVE';
-                if (currency === 'btc') return d3.format(",.8f")(d) + ' BTC';
-                return d3.format(",")(d);
-            });
+        // Add all axes
+        addAxes(g, xScale, yScaleLeft, yScaleRight, chartData, currency, width, height);
 
-        // Add grid lines first (so they appear behind the data)
-        g.append("g")
-            .attr("class", "grid")
-            .attr("transform", `translate(0,${height})`)
-            .style("stroke-dasharray", "3,3")
-            .style("opacity", 0.3)
-            .call(d3.axisBottom(xScale)
-                .tickSize(-height)
-                .tickFormat("")
-            );
+        // Add grid lines
+        addGridLines(g, xScale, yScaleLeft, width, height);
 
-        g.append("g")
-            .attr("class", "grid")
-            .style("stroke-dasharray", "3,3")
-            .style("opacity", 0.3)
-            .call(d3.axisLeft(yScale)
-                .tickSize(-width)
-                .tickFormat("")
-            );
+        // Add primary line and points
+        addLineAndPoints(this, g, chartData, xScale, yScaleLeft, color, currency, 'primary');
 
-        // Add axes
-        g.append("g")
-            .attr("class", "axis")
-            .attr("transform", `translate(0,${height})`)
-            .call(xAxis)
-            .selectAll("text")
-            .style("text-anchor", "end")
-            .attr("dx", "-.6em")
-            .attr("dy", ".15em")
-            .attr("transform", "rotate(-45)");
-
-        g.append("g")
-            .attr("class", "axis")
-            .call(yAxis);
-
-        // Add line (if more than 1 point)
-        if (chartData.length > 1) {
-            const line = d3.line()
-                .x(d => xScale(d.date))
-                .y(d => yScale(d.value))
-                .curve(d3.curveMonotoneX);
-
-            g.append("path")
-                .datum(chartData)
-                .attr("fill", "none")
-                .attr("stroke", color)
-                .attr("stroke-width", 2)
-                .attr("d", line);
+        // Add secondary line and points if exists
+        if (secondaryData && yScaleRight) {
+            addLineAndPoints(this, g, secondaryData, xScale, yScaleRight, secondaryColor, currency, 'secondary');
         }
-
-        const self = this; //capture class context;
-
-        let radius = 5;
-
-        if (chartData.length > 180)
-            radius = 1;
-        else if (chartData.length > 60)
-            radius = 2;
-        else if (chartData.length > 30)
-            radius = 3;
-        else if (chartData.length > 5)
-            radius = 4;
-
-        // Add points
-        g.selectAll(".dot")
-        .data(chartData)
-        .enter().append("circle")
-        .attr("class", "dot")
-        .attr("cx", d => xScale(d.date))
-        .attr("cy", d => yScale(d.value))
-        .attr("r", radius)
-        .style("fill", color)
-        .style("stroke", "#fff")
-        .style("stroke-width", 2)
-        .on("mouseover", function(event, d) {
-            self.tooltip.transition()
-                .duration(200)
-                .style("opacity", .9);
-
-            let valueStr;
-            if (currency === 'usd') valueStr = '$' + d3.format(",.2f")(d.value);
-            else if (currency === 'hive') valueStr = d3.format(",.3f")(d.value) + ' HIVE';
-            else if (currency === 'btc') valueStr = d3.format(",.8f")(d.value) + ' BTC';
-            else valueStr = d3.format(",")(d.value);
-
-            // Build tooltip content
-            let tooltipContent = `<strong>${d3.timeFormat('%d %b %Y')(d.date)}</strong><br/>`;
-            tooltipContent += `<strong>${valueStr}</strong>`;
-            
-            // Add price information for HIVE and BTC charts
-            if (currency === 'hive' || currency === 'btc') {
-                const priceInfo = getPriceInfo(d, currency);
-                if (priceInfo) {
-                    tooltipContent += `<br/><em>${priceInfo}</em>`;
-                }
-            }
-            
-            // Add quantity information for specific tokens and pools
-            const category = document.getElementById('dataCategory').value;
-            const specificItem = document.getElementById('specificItem').value;
-            
-            if (category === 'specific_token' && specificItem) {
-                const quantityInfo = getTokenQuantity(d, specificItem);
-                if (quantityInfo) {
-                    tooltipContent += `<br/><span style="color: #90EE90;">${quantityInfo}</span>`;
-                }
-                
-                // Add token price information
-                const tokenPriceInfo = getTokenPriceInfo(d, specificItem, currency);
-                if (tokenPriceInfo) {
-                    tooltipContent += `<br/><span style="color: #FFD700;">${tokenPriceInfo}</span>`;
-                }
-            } else if (category === 'specific_pool' && specificItem) {
-                const sharesInfo = getPoolShares(d, specificItem);
-                if (sharesInfo) {
-                    tooltipContent += `<br/><span style="color: #87CEEB;">${sharesInfo}</span>`;
-                }
-                
-                // Add diesel pool component information
-                const poolInfo = getDieselPoolInfo(d, specificItem);
-                if (poolInfo) {
-                    tooltipContent += `<br/><span style="color: #DDA0DD;">${poolInfo}</span>`;
-                }
-            }
-
-            self.tooltip.html(tooltipContent)
-                .style("left", (event.pageX + 15) + "px")
-                .style("top", (event.pageY - 10) + "px");
-        })
-        .on("mouseout", function() {
-            self.tooltip.transition()
-                .duration(500)
-                .style("opacity", 0);
-        });
+        
+        ensurePrimaryChartOnTop(g);
     }
 }

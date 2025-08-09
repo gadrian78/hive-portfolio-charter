@@ -262,9 +262,65 @@ export function filterUnrealisticDrops(data, snapshotType, category) {
 }
 
 /**
- * Get price information for HIVE or BTC from metadata
+ * Get price information for HIVE from metadata
  */
-export function getPriceInfo(dataPoint, currency) {
+export function getHIVEPriceInfo(dataPoint, currency = 'usd') {
+    if (!dataPoint.snapshots || dataPoint.snapshots.length === 0) {
+        return null;
+    }
+
+    if (currency === 'hive') return 1.0;
+
+    // Get the first snapshot to extract price data from metadata
+    const snapshot = dataPoint.snapshots[0];
+    const prices = snapshot.metadata?.prices;
+    
+    if (!prices) return null;
+    
+    const hivePrice = prices.hive_usd;
+    if (hivePrice && hivePrice > 0) {
+        if (currency === 'btc') {
+            const btcPrice = prices.btc_usd;
+            if (btcPrice && btcPrice > 0) return hivePrice / btcPrice;
+        }
+        else return hivePrice; // if currency === 'usd'
+    }
+    
+    return null;
+}
+
+/**
+ * Get price information for BTC from metadata
+ */
+export function getBTCPriceInfo(dataPoint, currency = 'usd') {
+    if (!dataPoint.snapshots || dataPoint.snapshots.length === 0) {
+        return null;
+    }
+
+    if (currency === 'btc') return 1.0;
+
+    // Get the first snapshot to extract price data from metadata
+    const snapshot = dataPoint.snapshots[0];
+    const prices = snapshot.metadata?.prices;
+    
+    if (!prices) return null;
+
+    const btcPrice = prices.btc_usd;
+    if (btcPrice && btcPrice > 0) {
+        if (currency === 'hive') {
+            const hivePrice = prices.hive_usd;
+            if (hivePrice && hivePrice > 0) return btcPrice / hivePrice;
+        }
+        else return btcPrice; // if currency === 'usd'
+    }
+    
+    return null;
+}
+
+/**
+ * Get price information for HBD from metadata
+ */
+export function getHBDPriceInfo(dataPoint, currency) {
     if (!dataPoint.snapshots || dataPoint.snapshots.length === 0) {
         return null;
     }
@@ -275,15 +331,24 @@ export function getPriceInfo(dataPoint, currency) {
     
     if (!prices) return null;
     
-    if (currency === 'hive') {
-        const hivePrice = prices.hive_usd;
-        if (hivePrice && hivePrice > 0) {
-            return `HIVE Price: $${d3.format(",.4f")(hivePrice)}`;
+
+    const hbdPrice = prices.hbd_usd;
+    if (hbdPrice && hbdPrice > 0) {
+        if (currency === 'hive') {
+            const hivePrice = prices.hive_usd;
+            if (hivePrice && hivePrice > 0) {
+                const hbdPrice_in_hive = hbdPrice / hivePrice;
+                return hbdPrice_in_hive;
+            }
+        } else if (currency === 'btc') {
+            const btcPrice = prices.btc_usd;
+            if (btcPrice && btcPrice > 0) {
+                const hbdPrice_in_btc = hbdPrice / btcPrice;
+                return hbdPrice_in_btc;
+            }
         }
-    } else if (currency === 'btc') {
-        const btcPrice = prices.btc_usd;
-        if (btcPrice && btcPrice > 0) {
-            return `BTC Price: $${d3.format(",.0f")(btcPrice)}`;
+        else if (currency === 'usd') {
+            return hbdPrice;
         }
     }
     
@@ -297,8 +362,6 @@ export function getTokenPriceInfo(dataPoint, specificItem, currency) {
     if (!dataPoint.snapshots || dataPoint.snapshots.length === 0) {
         return null;
     }
-
-    const tokenName = specificItem.replace('L1:', '').replace('TOKEN:', '');
     
     // Don't show HIVE price twice for L1 HIVE when on HIVE chart
     if (specificItem === 'L1:HIVE' && currency === 'hive') {
@@ -347,32 +410,29 @@ export function getTokenPriceInfo(dataPoint, specificItem, currency) {
 
     // Only calculate price if we have valid data
     if (validSnapshots > 0 && totalQuantity > 0) {
-        let tokenPrice = 0;
-        let priceLabel = '';
-        
+
+        let tokenPrice = 0;        
         // Calculate price based on the currency being displayed
         switch (currency) {
             case 'usd':
                 if (totalValueUsd > 0) {
                     tokenPrice = totalValueUsd / totalQuantity;
-                    priceLabel = `${tokenName} Price: $${d3.format(",.6f")(tokenPrice)}`;
+                    return tokenPrice;
                 }
                 break;
             case 'hive':
                 if (totalValueHive > 0) {
                     tokenPrice = totalValueHive / totalQuantity;
-                    priceLabel = `${tokenName} Price: ${d3.format(",.6f")(tokenPrice)} HIVE`;
+                    return tokenPrice;
                 }
                 break;
             case 'btc':
                 if (totalValueBtc > 0) {
                     tokenPrice = totalValueBtc / totalQuantity;
-                    priceLabel = `${tokenName} Price: ${d3.format(",.10f")(tokenPrice)} BTC`;
+                    return tokenPrice;
                 }
                 break;
         }
-        
-        return priceLabel || null;
     }
     
     return null;
@@ -429,9 +489,10 @@ export function getTokenQuantity(dataPoint, specificItem) {
         if (specificItem.startsWith('L1:')) {
             const key = specificItem.replace('L1:', '');
             const data = snapshot.layer1_holdings?.[key];
-            if (data && data.total_amount !== undefined && data.total_amount !== null) {
+            if (data && data.amount !== undefined && data.amount !== null) {
                 // Convert to number if it's a string
-                const quantity = typeof data.total_amount === 'string' ? parseFloat(data.total_amount) : data.total_amount;
+                // note that field for "total_amount" is called "amount" for L1 tokens.
+                const quantity = typeof data.amount === 'string' ? parseFloat(data.amount) : data.amount;
                 if (!isNaN(quantity)) {
                     totalQuantity += quantity;
                     found = true;
@@ -453,8 +514,7 @@ export function getTokenQuantity(dataPoint, specificItem) {
 
     // Show quantity even if it's 0
     if (found) {
-        const tokenName = specificItem.replace('L1:', '').replace('TOKEN:', '');
-        return `Quantity: ${d3.format(",.3f")(totalQuantity)} ${tokenName}`;
+        return totalQuantity;
     }
     
     console.log(`No quantity found for ${specificItem}`);
@@ -483,9 +543,39 @@ export function getPoolShares(dataPoint, specificItem) {
     });
 
     if (found && totalShares > 0) {
-        return `Shares: ${d3.format(",.6f")(totalShares)}`;
+        return totalShares;
     }
     
     console.log(`No shares found for ${specificItem}`);
+    return null;
+}
+
+// Get amount/total_amount for specificItem token/diesel pool (all snapshots)
+export function getAmountData(dataPoint, specificItem, category) {
+    if (!dataPoint.snapshots || dataPoint.snapshots.length === 0) return null;
+
+    if (category === 'specific_token') {
+        return getTokenQuantity(dataPoint, specificItem);
+    } else if (category === 'specific_pool') {
+        return getPoolShares(dataPoint, specificItem);
+    }    
+    return null;
+}
+
+// Get price for specificToken token
+export function getPriceData(dataPoint, specificItem, currency) {
+    if (!dataPoint.snapshots || dataPoint.snapshots.length === 0) return 0;
+    
+    if (specificItem === 'TOKEN:SWAP.HIVE' || specificItem === 'L1:liquid_hive' || specificItem === 'L1:savings_hive' || specificItem === 'L1:hive_power') {
+        return getHIVEPriceInfo(dataPoint, currency);
+    }
+    else if (specificItem === 'TOKEN:SWAP.HBD' || specificItem === 'L1:liquid_hbd' || specificItem === 'L1:savings_hbd') {
+        return getHBDPriceInfo(dataPoint, currency);
+    }
+    else if (specificItem === 'TOKEN:SWAP.BTC') {
+        return getBTCPriceInfo(dataPoint, currency);
+    }
+    else return getTokenPriceInfo(dataPoint, specificItem, currency);
+    
     return null;
 }
