@@ -11,7 +11,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 Hive Portfolio Charter 1.53</h1>
+            <h1>📊 Hive Portfolio Charter 1.60</h1>
             <p>Visualize your Hive blockchain portfolio performance over time</p>
         </div>
 
@@ -70,8 +70,8 @@
                 </div>
 
                 <div class="control-item">
-                    <label for="chartsMode">📊 Charts</label>
-                    <select id="chartsMode">
+                    <label for="chartsType">📊 Charts</label>
+                    <select id="chartsType">
                         <option value="value_only">Value Only (Y axis)</option>
                         <option value="value_amount">Value (left Y axis) + Amount (right Y axis, where applicable)</option>
                         <option value="value_price">Value (left Y axis) + Price (right Y axis, where applicable)</option>
@@ -89,21 +89,24 @@
 
         <div class="charts-container">
             <div class="chart-card">
-                <h3 class="chart-title">💰 USD Value</h3>
+                <h3 class="chart-title chart-usd">💰 USD Value</h3>
+                <p id="label_right_y_axis_chart_usd" class="right_y_axis_label secondary-chart-usd">&nbsp;</p>
                 <div class="chart-container">
                     <div id="usdChart"></div>
                 </div>
             </div>
 
             <div class="chart-card">
-                <h3 class="chart-title"><img class="hive-logo-icon" src="res/hive-logo.png" alt="Hive logo"/> HIVE Value</h3>
+                <h3 class="chart-title chart-hive"><img class="hive-logo-icon" src="res/hive-logo.png" alt="Hive logo"/> HIVE Value</h3>
+                <p id="label_right_y_axis_chart_hive" class="right_y_axis_label secondary-chart-hive">&nbsp;</p>
                 <div class="chart-container">
                     <div id="hiveChart"></div>
                 </div>
             </div>
 
             <div class="chart-card">
-                <h3 class="chart-title">₿ BTC Value</h3>
+                <h3 class="chart-title chart-btc">₿ BTC Value</h3>
+                <p id="label_right_y_axis_chart_btc" class="right_y_axis_label secondary-chart-btc">&nbsp;</p>
                 <div class="chart-container">
                     <div id="btcChart"></div>
                 </div>
