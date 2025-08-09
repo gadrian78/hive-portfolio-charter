@@ -39,6 +39,9 @@ export class HivePortfolioCharter {
 
         this.initializeEventListeners();
         this.initializeCharts();
+        
+        // Add orientation change listener
+        this.setupOrientationHandling();
     }
     destroy() {
         this.tooltip.remove();
@@ -66,6 +69,14 @@ export class HivePortfolioCharter {
     
     // Properly handle window resize
     handleResize() {
+        const viewportWidth = window.innerWidth;
+        const minRequiredWidth = 480;
+        
+        // Only proceed with chart updates if width is sufficient
+        if (viewportWidth < minRequiredWidth) {
+            return; // Charts are hidden anyway
+        }
+        
         // Add debouncing flag to prevent multiple simultaneous resize operations
         if (this.isResizing) return;
         this.isResizing = true;
@@ -106,65 +117,34 @@ export class HivePortfolioCharter {
     setupChart(chartId, suggestedLeftMargin = 80, suggestedRightMargin = 80) {
         const container = this.charts[chartId].container;
         
-        // Get viewport width for mobile detection
-        this.viewportWidth = window.innerWidth;
-        this.isMobile = this.viewportWidth <= 768;
-        this.isVerySmall = this.viewportWidth <= 480;
-        
         // Get the actual current width of the container
         const containerRect = container.node().getBoundingClientRect();
         let containerWidth = containerRect.width;
         
         // Handle cases where container width is 0 or not available
         if (!containerWidth || containerWidth === 0) {
-            containerWidth = this.viewportWidth > 768 ? 800 : Math.min(this.viewportWidth - 40, 400);
+            containerWidth = 800; // Default fallback
         }
         
-        // Set mobile-friendly minimum widths
-        let minWidth;
-        if (this.isVerySmall) {
-            minWidth = Math.min(280, viewportWidth - 40); // Leave 20px padding on each side
-        } else if (this.isMobile) {
-            minWidth = Math.min(320, viewportWidth - 40);
-        } else {
-            minWidth = 400;
-        }
+        // Ensure reasonable minimum width (we won't show charts below 480px anyway)
+        containerWidth = Math.max(containerWidth, 400);
         
-        containerWidth = Math.max(containerWidth, minWidth);
-        
-        // Adjust margins for mobile
-        let leftMargin, rightMargin;
-        
-        if (this.isVerySmall) {
-            leftMargin = Math.min(40, Math.max(20, suggestedLeftMargin * 0.4));
-            rightMargin = Math.min(40, Math.max(20, suggestedRightMargin * 0.4));
-        } else if (this.isMobile) {
-            leftMargin = Math.min(60, Math.max(30, suggestedLeftMargin * 0.6));
-            rightMargin = Math.min(60, Math.max(30, suggestedRightMargin * 0.6));
-        } else {
-            leftMargin = Math.min(120, Math.max(60, suggestedLeftMargin));
-            rightMargin = Math.min(120, Math.max(60, suggestedRightMargin));
-        }
-        
+        // Use reasonable margin limits
         const margin = { 
             top: 20, 
-            right: rightMargin,
-            bottom: this.isMobile ? 60 : 80, // Reduce bottom margin on mobile
-            left: leftMargin
+            right: Math.min(120, Math.max(60, suggestedRightMargin)),
+            bottom: 80, 
+            left: Math.min(120, Math.max(60, suggestedLeftMargin))
         };
         
-        const containerHeight = 350; // Slightly reduce height on mobile?
+        const containerHeight = 350;
         
         const width = containerWidth - margin.left - margin.right;
         const height = containerHeight - margin.top - margin.bottom;
 
         // Ensure minimum chart area
-        if (width < 100 || height < 75) {
+        if (width < 200 || height < 150) {
             console.warn(`Chart ${chartId} dimensions too small: ${width}x${height}`);
-            // Use absolute minimum margins if chart area is too small
-            margin.left = 20;
-            margin.right = 20;
-            margin.bottom = 40;
         }
 
         // Clear any existing content
@@ -177,7 +157,7 @@ export class HivePortfolioCharter {
             .style("width", "100%")
             .style("height", "auto")
             .style("max-width", "100%")
-            .style("display", "block"); // Ensure proper display
+            .style("display", "block");
 
         const g = svg.append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
@@ -185,12 +165,115 @@ export class HivePortfolioCharter {
         // Store dimensions and elements for later use
         this.charts[chartId].svg = svg;
         this.charts[chartId].g = g;
-        this.charts[chartId].width = Math.max(width, 100); // Ensure minimum width
-        this.charts[chartId].height = Math.max(height, 75); // Ensure minimum height
+        this.charts[chartId].width = width;
+        this.charts[chartId].height = height;
         this.charts[chartId].margin = margin;
         this.charts[chartId].containerWidth = containerWidth;
         this.charts[chartId].containerHeight = containerHeight;
     }
+    
+    // check if we can show charts on mobile without changing orientation to landscape
+    setupOrientationHandling() {
+        // Listen for orientation changes
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                this.checkChartVisibility();
+                this.handleResize();
+            }, 250); // Small delay to let orientation change complete
+        });
+        
+        // Listen for resize (covers both orientation and window resize)
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                this.checkChartVisibility();
+                this.handleResize();
+            }, 150);
+        });
+        
+        // Initial check
+        this.checkChartVisibility();
+    }
+    
+    checkChartVisibility() {
+        const viewportWidth = window.innerWidth;
+        const minRequiredWidth = 480; // Minimum width to show charts
+        const shouldShowCharts = viewportWidth >= minRequiredWidth;
+        
+        const chartsContainer = document.querySelector('.charts-container');
+        const landscapeMessage = this.getOrCreateLandscapeMessage();
+        
+        if (shouldShowCharts) {
+            // Show charts, hide message
+            if (chartsContainer) {
+                chartsContainer.style.display = 'grid';
+            }
+            landscapeMessage.style.display = 'none';
+            
+            // Update charts if we have data
+            if (this.rawData.length > 0) {
+                this.updateCharts();
+            }
+        } else {
+            // Hide charts, show landscape message
+            if (chartsContainer) {
+                chartsContainer.style.display = 'none';
+            }
+            this.showLandscapeMessage(landscapeMessage, viewportWidth);
+        }
+    }
+    
+    getOrCreateLandscapeMessage() {
+        let messageDiv = document.getElementById('landscape-message');
+        
+        if (!messageDiv) {
+            messageDiv = document.createElement('div');
+            messageDiv.id = 'landscape-message';
+            messageDiv.className = 'landscape-message';
+            
+            // Insert after the controls section
+            const controlsSection = document.querySelector('.controls');
+            if (controlsSection) {
+                controlsSection.parentNode.insertBefore(messageDiv, controlsSection.nextSibling);
+            } else {
+                // Fallback: append to container
+                document.querySelector('.container').appendChild(messageDiv);
+            }
+        }
+        
+        return messageDiv;
+    }
+    
+    showLandscapeMessage(messageDiv, currentWidth) {
+        const minRequiredWidth = 480;
+        const widthNeeded = minRequiredWidth - currentWidth;
+        
+        messageDiv.innerHTML = `
+            <div class="landscape-content">
+                <div class="landscape-icon">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="6" width="20" height="8" rx="2"/>
+                        <path d="m6 12-3-3 3-3"/>
+                        <path d="m18 12 3-3-3-3"/>
+                    </svg>
+                </div>
+                <h3>Rotate Device to View Charts</h3>
+                <p>Charts require a minimum width of ${minRequiredWidth}px for optimal viewing.</p>
+                <p>Your current screen width is ${currentWidth}px (need ${widthNeeded}px more).</p>
+                <div class="landscape-instruction">
+                    <strong>Please rotate your device to landscape orientation to view the charts.</strong>
+                </div>
+                <div class="landscape-note">
+                    The data controls and dashboard above are still fully functional in portrait mode.
+                </div>
+            </div>
+        `;
+        
+        messageDiv.style.display = 'block';
+    }
+    
+    
 
     async handleFileInput(event) {
         const files = Array.from(event.target.files);
@@ -552,6 +635,14 @@ export class HivePortfolioCharter {
     }
 
     updateCharts() {
+        const viewportWidth = window.innerWidth;
+        const minRequiredWidth = 480;
+        
+        // Don't update charts if viewport is too narrow
+        if (viewportWidth < minRequiredWidth) {
+            return;
+        }
+    
         if (this.rawData.length === 0) {
             Object.keys(this.charts).forEach(chartId => {
                 const currency = this.charts[chartId].currency.toLowerCase();
@@ -624,11 +715,11 @@ export class HivePortfolioCharter {
     updateChart(chartId, data, currency, synchronizedScales = null, recursionDepth = 0) {
         const chart = this.charts[chartId];
         const g = chart.g;
-
+        console.log("isVerySmall:", this.isVerySmall, "viewportWidth:", this.viewportWidth);
         // Add this check in your updateChart method, after creating the SVG
-        if (this.isVerySmall) {
+        if (!this.isVerySmall) {
             // Force SVG to respect absolute maximum width
-            this.charts[chartId].svg.style("max-width", `${Math.min(300, this.viewportWidth - 10)}px`);
+            g.style("max-width", `${Math.min(300, this.viewportWidth - 10)}px`);
         }
         
         let { width, height } = chart;
