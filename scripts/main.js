@@ -136,11 +136,11 @@ export class HivePortfolioCharter {
         let leftMargin, rightMargin;
         
         if (isVerySmall) {
-            leftMargin = Math.min(50, Math.max(35, suggestedLeftMargin * 0.6));
-            rightMargin = Math.min(50, Math.max(35, suggestedRightMargin * 0.6));
+            leftMargin = Math.min(40, Math.max(20, suggestedLeftMargin * 0.4));
+            rightMargin = Math.min(40, Math.max(20, suggestedRightMargin * 0.4));
         } else if (isMobile) {
-            leftMargin = Math.min(70, Math.max(45, suggestedLeftMargin * 0.8));
-            rightMargin = Math.min(70, Math.max(45, suggestedRightMargin * 0.8));
+            leftMargin = Math.min(60, Math.max(30, suggestedLeftMargin * 0.6));
+            rightMargin = Math.min(60, Math.max(30, suggestedRightMargin * 0.6));
         } else {
             leftMargin = Math.min(120, Math.max(60, suggestedLeftMargin));
             rightMargin = Math.min(120, Math.max(60, suggestedRightMargin));
@@ -153,7 +153,7 @@ export class HivePortfolioCharter {
             left: leftMargin
         };
         
-        const containerHeight = isMobile ? 280 : 350; // Slightly reduce height on mobile
+        const containerHeight = 350; // Slightly reduce height on mobile?
         
         const width = containerWidth - margin.left - margin.right;
         const height = containerHeight - margin.top - margin.bottom;
@@ -162,8 +162,8 @@ export class HivePortfolioCharter {
         if (width < 150 || height < 100) {
             console.warn(`Chart ${chartId} dimensions too small: ${width}x${height}`);
             // Use absolute minimum margins if chart area is too small
-            margin.left = 30;
-            margin.right = 30;
+            margin.left = 20;
+            margin.right = 20;
             margin.bottom = 40;
         }
 
