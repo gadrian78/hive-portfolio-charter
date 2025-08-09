@@ -315,7 +315,7 @@ body {
 }
 
 
-/* Additional mobile-specific fixes */
+/* Additional mobile-specific fixes for Chart Type dropdown*/
 @media (max-width: 768px) {
     .control-group {
         grid-template-columns: 1fr;
@@ -364,6 +364,100 @@ body {
     .controls {
         max-width: 100%;
         overflow-x: hidden;
+    }
+}
+
+/* Mobile-specific chart sizing fixes - focus on horizontal constraints */
+@media (max-width: 768px) {
+    .chart-container {
+        max-width: 100%;
+        width: 100%;
+        overflow: hidden; /* Prevent horizontal scrolling */
+    }
+    
+    .chart-container svg {
+        max-width: 100% !important;
+        width: 100% !important;
+        height: auto;
+        /* Force SVG to fit container */
+        overflow: visible;
+    }
+    
+    .chart-card {
+        padding: 15px 10px 0 10px; /* Reduce horizontal padding */
+        margin: 0; /* Remove any margins */
+        max-width: 100%;
+        overflow: hidden;
+    }
+    
+    /* Ensure charts container doesn't overflow */
+    .charts-container {
+        max-width: 100%;
+        overflow: hidden;
+    }
+}
+
+@media (max-width: 480px) {
+    .chart-container {
+        max-width: 100%;
+        width: 100%;
+        overflow: hidden;
+    }
+    
+    .chart-container svg {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    
+    .chart-card {
+        padding: 12px 8px 0 8px; /* Minimal horizontal padding */
+        margin: 0;
+    }
+    
+    .chart-title {
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+        padding: 0 5px; /* Small padding to prevent text touching edges */
+    }
+    
+    /* Make axis labels smaller to fit better */
+    .axis {
+        font-size: 8px !important;
+    }
+    
+    /* Adjust tooltip positioning */
+    .tooltip {
+        font-size: 10px;
+        padding: 4px;
+        max-width: 150px;
+        word-wrap: break-word;
+    }
+}
+
+/* Add these to prevent horizontal overflow on mobile */
+@media (max-width: 768px) {
+    /* Ensure body doesn't allow horizontal scrolling */
+    body {
+        overflow-x: hidden;
+        max-width: 100vw;
+    }
+    
+    /* Container constraints */
+    .container {
+        max-width: 100vw;
+        padding: 10px;
+        overflow-x: hidden;
+    }
+    
+    /* Chart-specific horizontal constraints */
+    .charts-container {
+        max-width: 100%;
+        padding: 0;
+    }
+    
+    /* If using D3.js, you might need to adjust margins */
+    .chart-container .axis text {
+        font-size: 10px;
     }
 }
 
