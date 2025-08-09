@@ -232,13 +232,19 @@ export class HivePortfolioCharter {
             messageDiv.id = 'landscape-message';
             messageDiv.className = 'landscape-message';
             
-            // Insert after the controls section
+            // Insert after the dashboard section (instead of controls)
             const dashboardSection = document.querySelector('.dashboard-section');
             if (dashboardSection) {
                 dashboardSection.parentNode.insertBefore(messageDiv, dashboardSection.nextSibling);
             } else {
-                // Fallback: append to container
-                document.querySelector('.container').appendChild(messageDiv);
+                // Fallback: look for controls section
+                const controlsSection = document.querySelector('.controls');
+                if (controlsSection) {
+                    controlsSection.parentNode.insertBefore(messageDiv, controlsSection.nextSibling);
+                } else {
+                    // Last fallback: append to container
+                    document.querySelector('.container').appendChild(messageDiv);
+                }
             }
         }
         
