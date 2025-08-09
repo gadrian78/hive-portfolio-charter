@@ -107,9 +107,9 @@ export class HivePortfolioCharter {
         const container = this.charts[chartId].container;
         
         // Get viewport width for mobile detection
-        const viewportWidth = window.innerWidth;
-        const isMobile = viewportWidth <= 768;
-        const isVerySmall = viewportWidth <= 480;
+        this.viewportWidth = window.innerWidth;
+        this.isMobile = this.viewportWidth <= 768;
+        this.isVerySmall = this.viewportWidth <= 480;
         
         // Get the actual current width of the container
         const containerRect = container.node().getBoundingClientRect();
@@ -117,14 +117,14 @@ export class HivePortfolioCharter {
         
         // Handle cases where container width is 0 or not available
         if (!containerWidth || containerWidth === 0) {
-            containerWidth = viewportWidth > 768 ? 800 : Math.min(viewportWidth - 40, 400);
+            containerWidth = this.viewportWidth > 768 ? 800 : Math.min(this.viewportWidth - 40, 400);
         }
         
         // Set mobile-friendly minimum widths
         let minWidth;
-        if (isVerySmall) {
+        if (this.isVerySmall) {
             minWidth = Math.min(280, viewportWidth - 40); // Leave 20px padding on each side
-        } else if (isMobile) {
+        } else if (this.isMobile) {
             minWidth = Math.min(320, viewportWidth - 40);
         } else {
             minWidth = 400;
@@ -135,10 +135,10 @@ export class HivePortfolioCharter {
         // Adjust margins for mobile
         let leftMargin, rightMargin;
         
-        if (isVerySmall) {
+        if (this.isVerySmall) {
             leftMargin = Math.min(40, Math.max(20, suggestedLeftMargin * 0.4));
             rightMargin = Math.min(40, Math.max(20, suggestedRightMargin * 0.4));
-        } else if (isMobile) {
+        } else if (this.isMobile) {
             leftMargin = Math.min(60, Math.max(30, suggestedLeftMargin * 0.6));
             rightMargin = Math.min(60, Math.max(30, suggestedRightMargin * 0.6));
         } else {
@@ -149,7 +149,7 @@ export class HivePortfolioCharter {
         const margin = { 
             top: 20, 
             right: rightMargin,
-            bottom: isMobile ? 60 : 80, // Reduce bottom margin on mobile
+            bottom: this.isMobile ? 60 : 80, // Reduce bottom margin on mobile
             left: leftMargin
         };
         
@@ -159,7 +159,7 @@ export class HivePortfolioCharter {
         const height = containerHeight - margin.top - margin.bottom;
 
         // Ensure minimum chart area
-        if (width < 150 || height < 100) {
+        if (width < 100 || height < 75) {
             console.warn(`Chart ${chartId} dimensions too small: ${width}x${height}`);
             // Use absolute minimum margins if chart area is too small
             margin.left = 20;
@@ -185,8 +185,8 @@ export class HivePortfolioCharter {
         // Store dimensions and elements for later use
         this.charts[chartId].svg = svg;
         this.charts[chartId].g = g;
-        this.charts[chartId].width = Math.max(width, 150); // Ensure minimum width
-        this.charts[chartId].height = Math.max(height, 100); // Ensure minimum height
+        this.charts[chartId].width = Math.max(width, 100); // Ensure minimum width
+        this.charts[chartId].height = Math.max(height, 75); // Ensure minimum height
         this.charts[chartId].margin = margin;
         this.charts[chartId].containerWidth = containerWidth;
         this.charts[chartId].containerHeight = containerHeight;
@@ -624,6 +624,13 @@ export class HivePortfolioCharter {
     updateChart(chartId, data, currency, synchronizedScales = null, recursionDepth = 0) {
         const chart = this.charts[chartId];
         const g = chart.g;
+
+        // Add this check in your updateChart method, after creating the SVG
+        if (this.isVerySmall) {
+            // Force SVG to respect absolute maximum width
+            this.charts[chartId].svg.style("max-width", `${Math.min(300, this.viewportWidth - 10)}px`);
+        }
+        
         let { width, height } = chart;
         const color = chart.color;
         
