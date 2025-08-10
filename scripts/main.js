@@ -265,7 +265,7 @@ export class HivePortfolioCharter {
                     <strong>Please rotate your device to landscape orientation to view the charts.</strong>
                 </div>
                 <div class="landscape-note">
-                    The user options and dashboard above are still fully functional in portrait mode.
+                    The user options above and dashboard are still fully functional in portrait mode.
                 </div>
             </div>
         `;
