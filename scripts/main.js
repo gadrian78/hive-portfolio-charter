@@ -714,14 +714,7 @@ export class HivePortfolioCharter {
 
     updateChart(chartId, data, currency, synchronizedScales = null, recursionDepth = 0) {
         const chart = this.charts[chartId];
-        const g = chart.g;
-        console.log("isVerySmall:", this.isVerySmall, "viewportWidth:", this.viewportWidth);
-        // Add this check in your updateChart method, after creating the SVG
-        if (!this.isVerySmall) {
-            // Force SVG to respect absolute maximum width
-            g.style("max-width", `${Math.min(300, this.viewportWidth - 10)}px`);
-        }
-        
+        const g = chart.g;      
         let { width, height } = chart;
         const color = chart.color;
         
